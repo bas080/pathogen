@@ -16,8 +16,11 @@ minetest.register_chatcommand("infect", {
       minetest.chat_send_player(name, 'could not infect: pathogen '..pathogen_name..' does not exist')
       return nil
     end
-    pathogen.infect( pathogen_name, player_name )
-    minetest.chat_send_player(name, 'infected '..player_name..' with '..pathogen_name)
+    if pathogen.infect( pathogen_name, player_name ) then
+      minetest.chat_send_player(name, 'infected '..player_name..' with '..pathogen_name)
+    else
+      minetest.chat_send_player(name, 'could not infect: for some unknown reason' )
+    end
   end
 })
 

@@ -18,7 +18,7 @@ and keep your distance from players that are coughing. Death is very unlikely.
 
 Panola
 ------
-Contagious threw body fluids. It is ok to be near someone that has the diseases.
+Contagious through body fluids. It is ok to be near someone that has the diseases.
 Make sure that when cleaning up after someone that has expelled fluids, to
 decontaminate the fluids first. This can be done with the Decontaminator.
 
@@ -30,10 +30,37 @@ Items
 
 Crafts
 ======
-**Decontaminater**
-{'xpanes:bar','',''},
-{'','default:steelblock',''},
-{'','',''}
+```lua
+pathogen.recipes['xpanes:fence_warning'] =  {
+  {'group:stick', 'wool:red', 'group:stick'},
+  {'group:stick', 'wool:red', 'group:stick'},
+  {'group:stick', 'wool:red', 'group:stick'}
+}
+
+pathogen.recipes['pathogen:decontaminator'] = {
+  {'xpanes:bar','',''},
+  {'','default:steelblock',''},
+  {'','',''}
+}
+```
+
+Commands
+========
+Infections can be initiated by using commands. It requires the "pathogen"
+privilege. /grant <playername> pathogen.
+
+```lua
+
+/pathogens
+--list all pathogens and their descriptions
+
+/infect <player name> <pathogen name>
+--infect the player
+
+/immunize <player name> <pathogen name>
+--make player immune to particular pathogen
+
+```
 
 API
 ===
@@ -102,59 +129,72 @@ The infection table includes.
 Functions
 ---------
 ```lua
---pathogens
-pathogen.register_pathogen( pathogen_name, definition )
 
---getters
-pathogen.get_pathogen( pathogen_name )
-pathogen.get_pathogens()
-pathogen.get_infection( player_name, pathogen_name )
-pathogen.get_infections()
-pathogen.get_players_in_radius( pos, radius )
-pathogen.get_player_infections( player_name )
+--PATHOGENS
+pathogen.register_pathogen = function( pathogen_name, definition )
+  --checks if pathogen is registererd and registers if not
+  ----
+pathogen.get_pathogen = function( pathogen_name )
+  --get the table of a particular pathogen
+  ----
+pathogen.get_pathogens = function()
+  --gives all the pathogens that are registered
+  ----
 
---actions
-pathogen.infect( pathogen_name, player_name )
-pathogen.perform_symptom( pathogen_name, player_name, faze )
-  --this function allows to add a pathogen that is already in a certain face.
-  --Fade is a number that represents the id of the state of the infection
+--CONTAMINENTS
+pathogen.spawn_fluid = function( name, pos, pathogen_name )
+  --spawn the infectious juices
+  ----
+pathogen.register_fluid = function( name )
+  --registering a fluid(juice). This assumes that all fluids are flat on the
+  --floor
   ------
-pathogen.immunize( pathogen_name, player_name )
-pathogen.remove_infection( pathogen_name, player_name )
-  --the difference between immunize and remove is that immunize makes the player
-  --never get sick of the same sickness again and remove removes the current
-  --infection but also it's immunization, thus allowing the player to get
-  --infected again.
+pathogen.contaminate = function( pos, pathogen_name )
+  --contaminates a node which when dug infects the player that dug the node
+  ----
+pathogen.decontaminate = function( pos )
+  --remove the contamination from the node
+  ----
+pathogen.get_contaminant = function( pos )
+  --used to check if the node is infected and to get the name of the pathogen
+  --with which it is infected
+  ------
+
+--INFECTIONS
+pathogen.infect = function( pathogen_name, player_name )
+  --infects the player with a pathogen.
+  ----
+pathogen.perform_symptom = function( pathogen_name, player_name, symptom_n )
+  --An infection can also be initiated without having to perform the on_infect.
+  --you can can cut straight to a particular symptom by using this function
+  --notice the symptom_n argument. This is a number that determines the state of
+  --the infection.
   ----------
+pathogen.immunize = function( pathogen_name, player_name )
+  --immunize a player so the next symptom won"t show.
+  ----
+pathogen.remove_infection = function( pathogen_name, player_name )
+  --removes the immunization and the infection all together
+  ----
+pathogen.get_infection = function( player_name, pathogen_name )
+  --get an infection of a certain player
+  ----
+pathogen.get_infections = function()
+  --gives all the infections of all the players
+  ----
+pathogen.get_player_infections = function( player_name )
+  --helper function for getting the infections of a certain player
+  ----
 
---fluids (flat node boxes that represent contaminated fluids)
-pathogen.register_fluid( name )
-pathogen.spawn_fluid( name, pos, pathogen_name )
-pathogen.decontaminate_fluid( pos )
-  --fluids are contaminated nodes that will infect a player that punches that
-  --node. Considering making this more generic by allowing to have a function
-  --that allows making any node contaminable. Something like.
-  --pathogen.contaminate( pos ).
-  ----------
+--PERSISTENCE
+pathogen.save = function( infections )
+pathogen.load = function( run )
 
---makes the data persistent between server reloads (not yet implemented)
-pathogen.save( infections )
-pathogen.load( run )
-```
-Commands
-========
-Infections can be initiated by using commands. It requires the "pathogen"
-privilege. /grant <playername> pathogen.
+--HELPERS
+pathogen.get_players_in_radius = function( pos, radius )
+  --helper to get players within the radius.
+  ----
 
-```lua
-/pathogens
---list all pathogens and their descriptions
-
-/infect <player name> <pathogen name>
---infect the player
-
-/immunize <player name> <pathogen name>
---make player immune to particular pathogen
 ```
 
 Roadmap
@@ -162,8 +202,7 @@ Roadmap
 - saving infections for persistence between server restarts
 - more pathogens and cures
 - make the API more flexible, consistent and forgiving
-- consider immunization mechanic. Immunity is not indefinite...
-- pathogen.contaminate( pos ) function
+- register immunization with pathogen in seconds
 
 Reference
 =========

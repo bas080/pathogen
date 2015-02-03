@@ -1,4 +1,5 @@
 --DOES NOT WORK YET WIP
 pathogen.options = {
-  persistent = false
+  persistence = false,
+  immunization = false,
 }
