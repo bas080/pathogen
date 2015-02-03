@@ -257,7 +257,7 @@ minetest.register_on_dieplayer( function( player )
     local on_death = _pathogen.on_death
     if on_death then
       on_death( infection )
-      pathogen.remove_infection( pathogen_name, player_name )
+      pathogen.remove_infection( _pathogen.name, player_name )
     end
   end
 end)
