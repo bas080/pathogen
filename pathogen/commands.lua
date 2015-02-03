@@ -8,12 +8,16 @@ minetest.register_chatcommand("infect", {
     local params = params:split(' ')
     local player_name = params[1]
     local pathogen_name = params[2]
-    if minetest.get_player_by_name( player_name ) then
-      pathogen.infect( pathogen_name, player_name )
-      minetest.chat_send_player(name, 'infected '..player_name..' with '..pathogen_name)
-    else
-      minetest.chat_send_player(name, 'player does not exist')
+    if not minetest.get_player_by_name( player_name ) then
+      minetest.chat_send_player(name, 'could not infect: player '..player_name..' does not exist')
+      return nil
     end
+    if not pathogen.get_pathogen( pathogen_name ) then
+      minetest.chat_send_player(name, 'could not infect: pathogen '..pathogen_name..' does not exist')
+      return nil
+    end
+    pathogen.infect( pathogen_name, player_name )
+    minetest.chat_send_player(name, 'infected '..player_name..' with '..pathogen_name)
   end
 })
 
@@ -42,7 +46,7 @@ minetest.register_chatcommand("immunize", {
       minetest.chat_send_player( name, 'succesfully immunized '.._player_name..' against '.._pathogen_name)
       return true
     else
-      minetest.chat_send_player( name, 'immunization failed: requires player name and the pathogen name to work' )
+      minetest.chat_send_player( name, 'immunization failed: requires valid player name and the pathogen name to work' )
       return false
     end
   end
