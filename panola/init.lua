@@ -1,6 +1,6 @@
 pathogen.register_pathogen("panola", {
   description = "Panola virus is highly contagious. It spreads threw bodily fluids.",
-  symptoms = 10,
+  symptoms = 20,
   latent_period = 840,
   infection_period = 1200,
   --latent_period = 8400,
@@ -15,18 +15,18 @@ pathogen.register_pathogen("panola", {
     local player = minetest.get_player_by_name( infection.player )
     local pos = player:getpos()
     local hp = player:get_hp()
+    print(hp)
     if hp > 12 then
       player:set_hp( math.floor(hp /2 )  )
     else
       player:set_hp( hp - 1 )
     end
-    if math.random(0, 2) == 1 then
+    if math.random(0, 1) == 1 then
       pathogen.spawn_fluid( "vomit", pos, infection.pathogen )
       minetest.sound_play( "pathogen_vomit", { pos = pos, gain = 0.3} )
-    elseif math.random(0, 2 ) == 1 then
+    else
       pathogen.spawn_fluid( "feces", pos, infection.pathogen )
       minetest.sound_play( "pathogen_poop", { pos = pos, gain = 0.3} )
-    else
     end
   end
 })

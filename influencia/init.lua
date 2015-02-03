@@ -4,7 +4,9 @@ pathogen.register_pathogen("influencia", {
   latent_period = 240,
   infection_period = 740,
   on_infect = function( infection )
-    minetest.sound_play( "pathogen_cough", { pos = pos, gain = 0.3 } )
+    local _player = minetest.get_player_by_name( infection.player )
+    local _pos = _player:getpos()
+    minetest.sound_play( "pathogen_cough", { pos = _pos, gain = 0.3 } )
   end,
   on_symptom = function( infection )
     local player = minetest.get_player_by_name( infection.player )
