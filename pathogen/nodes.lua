@@ -42,7 +42,8 @@ xpanes.register_pane("fence_warning", {
   wield_image = "pathogen_fence.png",
   groups = {snappy=2, cracky=3, oddly_breakable_by_hand=3, pane=1},
   recipe = {
-    {'default:glass', 'default:glass', 'default:glass'},
-    {'default:glass', 'default:glass', 'default:glass'}
+    {'group:stick', 'wool:red', 'group:stick'},
+    {'group:stick', 'wool:red', 'group:stick'}
+    {'group:stick', 'wool:red', 'group:stick'}
   }
 })
