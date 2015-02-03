@@ -194,3 +194,9 @@ Reference
 =========
 - https://en.wikipedia.org/wiki/Incubation_period#mediaviewer/File:Concept_of_incubation_period.svg
 - https://www.freesound.org
+
+License
+=======
+Code	WTFPL
+Images	WTFPL
+Sounds	CC
