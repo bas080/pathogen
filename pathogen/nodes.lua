@@ -43,7 +43,7 @@ xpanes.register_pane("fence_warning", {
   groups = {snappy=2, cracky=3, oddly_breakable_by_hand=3, pane=1},
   recipe = {
     {'group:stick', 'wool:red', 'group:stick'},
-    {'group:stick', 'wool:red', 'group:stick'}
+    {'group:stick', 'wool:red', 'group:stick'},
     {'group:stick', 'wool:red', 'group:stick'}
   }
 })
