@@ -3,8 +3,6 @@ pathogen.register_pathogen("panola", {
   symptoms = 20,
   latent_period = 840,
   infection_period = 1200,
-  --latent_period = 8400,
-  --infection_period = 12000,
   on_death = function( infection )
     local _player = minetest.get_player_by_name( infection.player )
     local _pos = _player:getpos()
@@ -15,7 +13,6 @@ pathogen.register_pathogen("panola", {
     local player = minetest.get_player_by_name( infection.player )
     local pos = player:getpos()
     local hp = player:get_hp()
-    print(hp)
     if hp > 12 then
       player:set_hp( math.floor(hp /2 )  )
     else
