@@ -5,8 +5,10 @@ pathogen.register_pathogen = function( pathogen_name, definition )
   if not pathogen.get_pathogen( pathogen_name ) then
     definition.name = pathogen_name;
     pathogen.pathogens[pathogen_name] = definition
+    return pathogen.pathogens[pathogen_name]
   else
     print( " pathogen already registered" )
+    return false
   end
 end
 
@@ -29,7 +31,7 @@ pathogen.spawn_fluid = function( name, pos, pathogen_name )
   if minetest.get_node( pos ).name == "air" then
     local node_name = "pathogen:fluid_"..name
     minetest.set_node( pos, { name = node_name, param2=1 } )
-    pathogen.contaminate( pos )
+    pathogen.contaminate( pos, pathogen_name )
   end
 end
 
@@ -86,10 +88,10 @@ pathogen.get_contaminant = function( pos )
   ------
   local meta = minetest.get_meta( pos )
   local pathogen = meta:get_string( 'pathogen' )
-  if #pathogen == 0 then
-    return nil
-  else
+  if pathogen ~= '' and pathogen then
     return pathogen
+  else
+    return nil
   end
 end
 
@@ -149,7 +151,7 @@ pathogen.perform_symptom = function( pathogen_name, player_name, symptom_n )
   ----------
   local _infection = pathogen.infections[ player_name..pathogen_name ]
   local _pathogen = pathogen.pathogens[pathogen_name]
-  if not _infection.immune then
+  if _infection and not _infection.immune then
     --only keep showing symptoms if there is no immunity against the pathogen
     ----
     local symptom_n = symptom_n + 1
@@ -177,7 +179,8 @@ pathogen.immunize = function( pathogen_name, player_name )
   ----
   print( "immunized: "..player_name.." from "..pathogen_name )
   local _infection = pathogen.get_infection( player_name, pathogen_name )
-  if _infection.on_immunize then _infection.on_immunize( _infection ) end
+  local _pathogen = pathogen.get_pathogen( pathogen_name )
+  if _pathogen.on_immunize then _pathogen.on_immunize( _infection ) end
   if _infection then
     _infection.immune = true
     return true
@@ -189,7 +192,7 @@ end
 pathogen.remove_infection = function( pathogen_name, player_name )
   --removes the immunization and the infection all together
   ----
-  if pathogen.infections[player_name..pathogen_name] then
+  if pathogen.get_infection( player_name, pathogen_name ) then
     pathogen.infections[player_name..pathogen_name] = nil
   end
 end
@@ -256,8 +259,8 @@ minetest.register_on_dieplayer( function( player )
     local _pathogen = pathogen.get_pathogen( infection.pathogen )
     local on_death = _pathogen.on_death
     if on_death then
-      on_death( infection )
       pathogen.remove_infection( _pathogen.name, player_name )
+      on_death( infection )
     end
   end
 end)
