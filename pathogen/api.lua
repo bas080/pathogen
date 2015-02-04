@@ -85,7 +85,7 @@ pathogen.get_contaminant = function( pos )
   --with which it is infected
   ------
   local meta = minetest.get_meta( pos )
-  local pathogen = meta:get_string( 'pathogen', pathogen_name )
+  local pathogen = meta:get_string( 'pathogen' )
   if #pathogen == 0 then
     return nil
   else
