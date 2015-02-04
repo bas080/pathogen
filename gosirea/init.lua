@@ -1,5 +1,5 @@
 pathogen.register_pathogen("gosirea", {
-  description = "Contagious threw contact. Symptons include gas. Carrier contaminates surfaces nearby when symptoms show. Not deadly for those that have good health",
+  description = "Symptons include gas. Carrier contaminates surfaces nearby. Not deadly for those that have good health",
   symptoms = 10,
   latent_period = 120,
   infection_period = 420,
