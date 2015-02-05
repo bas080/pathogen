@@ -24,13 +24,13 @@ pathogen.get_pathogens = function()
 end
 
 --CONTAMINENTS
-pathogen.spawn_fluid = function( name, pos, pathogen )
+pathogen.spawn_fluid = function( name, pos, pathogen_name )
   --spawn the infectious juices
   ----
   if minetest.get_node( pos ).name == "air" then
     local node_name = "pathogen:fluid_"..name
     minetest.set_node( pos, { name = node_name, param2=1 } )
-    pathogen.contaminate( pos, pathogen )
+    pathogen.contaminate( pos, pathogen_name )
   end
 end
 
@@ -69,15 +69,23 @@ pathogen.contaminate = function( pos, pathogen_name )
   --contaminates a node which when dug infects the player that dug the node
   ----
   local meta = minetest.get_meta( pos )
-  meta:set_string( 'pathogen', pathogen_name )
+  if meta then
+    meta:set_string( 'pathogen', pathogen_name )
+    return true
+  else
+    return false
+  end
 end
 
 pathogen.decontaminate = function( pos )
   --remove the contamination from the node
   ----
-  if pos then
-    local meta = minetest.get_meta( pos )
+  local meta = minetest.get_meta( pos )
+  if meta then
     meta:set_string( 'pathogen', '' )
+    return true
+  else
+    return false
   end
 end
 
@@ -86,11 +94,15 @@ pathogen.get_contaminant = function( pos )
   --with which it is infected
   ------
   local meta = minetest.get_meta( pos )
-  local pathogen = meta:get_string( 'pathogen' )
-  if pathogen ~= '' and pathogen then
-    return pathogen
+  local pathogen_name = meta:get_string( 'pathogen' )
+  if pathogen_name then
+    if pathogen_name ~= '' then
+      return pathogen_name
+    else
+      return false
+    end
   else
-    return nil
+    return false
   end
 end
 
