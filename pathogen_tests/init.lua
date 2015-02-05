@@ -44,6 +44,16 @@ lunit.tests( 'pathogen', function( unit )
   unit.ok( not pathogen.perform_symptom( infection, 0 ), 'symptom within the max amount of symptoms' )
   unit.ok( not pathogen.perform_symptom( infection, 1 ), 'symptom out of bounds' )
 
+  --CONTAMINATION
+  minetest.after( 0, function()
+    --have to use the after for getting server nodes
+    local pos = { x = 62, y = -2, z = 120}
+    unit.ok( pathogen.contaminate( pos, 'apathogen'), 'contaminate node' )
+    unit.equal( pathogen.get_contaminant( pos ), 'apathogen', 'get contaminated node')
+    unit.ok( pathogen.decontaminate( pos ), 'decontaminate the node')
+    unit.equal( pathogen.get_contaminant( pos ), false, 'get contaminated node')
+  end)
+
 end)
 
 --shutdown the server
