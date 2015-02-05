@@ -7,7 +7,6 @@ pathogen.register_pathogen = function( pathogen_name, definition )
     pathogen.pathogens[pathogen_name] = definition
     return pathogen.pathogens[pathogen_name]
   else
-    print( " pathogen already registered" )
     return false
   end
 end
@@ -25,13 +24,13 @@ pathogen.get_pathogens = function()
 end
 
 --CONTAMINENTS
-pathogen.spawn_fluid = function( name, pos, pathogen_name )
+pathogen.spawn_fluid = function( name, pos, pathogen )
   --spawn the infectious juices
   ----
   if minetest.get_node( pos ).name == "air" then
     local node_name = "pathogen:fluid_"..name
     minetest.set_node( pos, { name = node_name, param2=1 } )
-    pathogen.contaminate( pos, pathogen_name )
+    pathogen.contaminate( pos, pathogen )
   end
 end
 
@@ -96,38 +95,37 @@ pathogen.get_contaminant = function( pos )
 end
 
 --INFECTIONS
-pathogen.infect = function( pathogen_name, player_name )
-  --infects the player with a pathogen. If not able to returns false
+pathogen.infect = function( _pathogen, player_name )
+  --infects the player with a pathogen. If not able returns false
   ----
-  local _pathogen = pathogen.get_pathogen( pathogen_name, player_name )
-  if not _pathogen or _pathogen.immune == true then return false end
-    --do not perform infection if infection has already occured or if player no
-    --longer immune
-    ------
-  local _player = minetest.get_player_by_name( player_name )
+  local infection = pathogen.get_infection( _pathogen.name, player_name )
+  if ( infection ~= nil ) then
+    --return false if pathogen does not exist or player is immune
+    if ( infection.immune ) then return false end
+  end
+    --consider making an is_immune function
+    ----
 
-  if _pathogen == nil then return false end
-    --check if pathogen exists
-    ------
-  local _infection = {
+
+  local infection = {
     --The table containing all the data that a infection cinsists out of. See
     --the README.md for a more extensive explanation
     ------
     symptom = 0,
-    pathogen = pathogen_name,
-    player = player_name,
-    immune = false
+    pathogen = _pathogen,
+    immune = false,
+    player = player_name
   }
 
-  pathogen.infections[ player_name..pathogen_name ] = _infection
-  print( "infected: "..player_name.." with "..pathogen_name )
+  pathogen.infections[ player_name.._pathogen.name ] = infection
     --store the infection in a table for later use. This table is also saved and
     --loaded if the persistent option is set
     ------
-  if _pathogen.on_infect then
-    --check if on_infect has been registered
+  local on_infect = _pathogen.on_infect
+  if on_infect then
+    --check if on_infect has been registered in pathogen
     ----
-    _pathogen.on_infect( _infection )
+    on_infect( infection )
   end
     --perform the on_infect command that is defined in the regsiter function
     --this is not the same as the on_symptoms. It is called only once at the
@@ -136,74 +134,80 @@ pathogen.infect = function( pathogen_name, player_name )
   minetest.after( _pathogen.latent_period, function()
     --latent perios is the time till the first symptom shows
     ----
-    pathogen.perform_symptom( pathogen_name, player_name, 1 )
+    pathogen.perform_symptom( infection,  0 )
       --show the first symptom
       ----
   end)
-  return true
+  return infection
 end
 
-pathogen.perform_symptom = function( pathogen_name, player_name, symptom_n )
+pathogen.perform_symptom = function( infection, symptom )
   --An infection can also be initiated without having to perform the on_infect.
   --you can can cut straight to a particular symptom by using this function
   --notice the symptom_n argument. This is a number that determines the state of
   --the infection.
   ----------
-  local _infection = pathogen.infections[ player_name..pathogen_name ]
-  local _pathogen = pathogen.pathogens[pathogen_name]
-  if _infection and not _infection.immune then
-    --only keep showing symptoms if there is no immunity against the pathogen
-    ----
-    local symptom_n = symptom_n + 1
-    if ( _pathogen.symptoms > symptom_n ) then --check if all symptoms have occured
-      --only show symptoms not all symptoms have occured.
-      _infection.symptom = symptom_n
-      _pathogen.on_symptom( _infection )
-      local _interval = ( ( _pathogen.infection_period - _pathogen.latent_period ) / _pathogen.symptoms )
-      minetest.after(  _interval , function()
-        --set the time till the next symptom and then perfrom it again
-        ----
-        pathogen.perform_symptom( pathogen_name, player_name, symptom_n )
-      end)
-    else
-      --survives and is now immunized, immunization lasts till the server is
-      --restarted
-      ------
-      pathogen.immunize( pathogen_name, player_name )
-    end
-  end
-end
-
-pathogen.immunize = function( pathogen_name, player_name )
-  --immunize a player so the next symptom won"t show.
+  if infection.immune then return false end
+  --only keep showing symptoms if there is no immunity against the pathogen
   ----
-  print( "immunized: "..player_name.." from "..pathogen_name )
-  local _infection = pathogen.get_infection( player_name, pathogen_name )
-  local _pathogen = pathogen.get_pathogen( pathogen_name )
-  if _pathogen.on_immunize then _pathogen.on_immunize( _infection ) end
-  if _infection then
-    _infection.immune = true
+  local symptom = symptom + 1
+  if ( infection.pathogen.symptoms >= symptom ) then --check if all symptoms have occured
+    --only show symptoms not all symptoms have occured.
+    infection.symptom = symptom
+
+    local on_symptom = infection.pathogen.on_symptom
+    if on_symptom then on_symptom( infection ) end
+
+    local interval = ( ( infection.pathogen.infection_period - infection.pathogen.latent_period ) / infection.pathogen.symptoms )
+    minetest.after(  interval , function()
+      --set the time till the next symptom and then perfrom it again
+      ----
+      pathogen.perform_symptom( infection, symptom )
+    end)
+    infection.symptom = symptom
     return true
+  elseif ( infection.pathogen.symptoms < symptom ) then
+    --survives and is now immunized, immunization lasts till the server is
+    --restarted
+    ------
+    pathogen.immunize( infection )
+    if infection.pathogen.on_recover then
+      return infection.pathogen.on_recover( infection )
+    else
+      return false
+    end
   else
     return false
   end
 end
 
-pathogen.remove_infection = function( pathogen_name, player_name )
-  --removes the immunization and the infection all together
+pathogen.immunize = function( infection )
+  --immunize a player so the next symptom won"t show.
   ----
-  if pathogen.get_infection( player_name, pathogen_name ) then
-    pathogen.infections[player_name..pathogen_name] = nil
+  if infection.immune == true then
+    --do not perform immunization as the player is already immune
+    ----
+    return false
+  else
+    infection.immune = true
+    return true
   end
 end
 
-pathogen.get_infection = function( player_name, pathogen_name )
+pathogen.remove_infection = function( infection )
+  --removes the immunization and the infection all together
+  ----
+  infection = nil
+  return infection == nil
+end
+
+pathogen.get_infection = function( player_name,  pathogen_name )
   --get an infection of a certain player
   ----
   return pathogen.infections[ player_name..pathogen_name ]
 end
 
-pathogen.get_infections = function()
+pathogen.get_infections = function( )
   --gives all the infections of all the players
   ----
   return pathogen.infections
@@ -212,24 +216,24 @@ end
 pathogen.get_player_infections = function( player_name )
   --helper function for getting the infections of a certain player
   ----
-  local _infections = pathogen.get_infections()
-  local _output = {}
-  for index, infection in pairs(_infections) do
+  local infections = pathogen.get_infections()
+  local output = {}
+  for index, infection in pairs(infections) do
     if infection.player == player_name then
-      _output[#_output+1] = infection
+      output[#output+1] = infection
     end
   end
-  return _output
+  return output
 end
 
 --PERSISTENCE
-pathogen.save = function( infections )
+pathogen.save = function( )
 --TODO save the infections so it won"t get lost between server reloads
   local serialized = minetest.serialize( infections )
   return serialized
 end
 
-pathogen.load = function( run )
+pathogen.load = function( )
 --TODO if run is true the loaded pathogens will run immediatly
   local deserialized = minetest.deserialize(string)
   return deserialized

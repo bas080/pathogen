@@ -1,4 +1,5 @@
 minetest.register_privilege('pathogen', "infect and cure players of pathogens")
+--TODO Check if player exists and then perform an infect or immunize
 
 minetest.register_chatcommand("infect", {
   params = "pathogen player",
@@ -10,16 +11,14 @@ minetest.register_chatcommand("infect", {
     local pathogen_name = params[2]
     if not minetest.get_player_by_name( player_name ) then
       minetest.chat_send_player(name, 'could not infect: player '..player_name..' does not exist')
-      return nil
     end
-    if not pathogen.get_pathogen( pathogen_name ) then
-      minetest.chat_send_player(name, 'could not infect: pathogen '..pathogen_name..' does not exist')
-      return nil
-    end
-    if pathogen.infect( pathogen_name, player_name ) then
-      minetest.chat_send_player(name, 'infected '..player_name..' with '..pathogen_name)
+    local _pathogen = pathogen.get_pathogen( pathogen_name )
+    if _pathogen then
+      if pathogen.infect( _pathogen, player_name ) then
+        minetest.chat_send_player(name, 'infected '..player_name..' with '..pathogen_name )
+      end
     else
-      minetest.chat_send_player(name, 'could not infect: for some unknown reason' )
+      minetest.chat_send_player(name, 'could not infect: pathogen '..pathogen_name..' does not exist')
     end
   end
 })
@@ -29,9 +28,10 @@ minetest.register_chatcommand("pathogens", {
   description = "list all available pathogens",
   privs = {},
   func = function(name, params)
-    local _pathogens = pathogen.get_pathogens()
-    for key, pathogen in pairs(_pathogens ) do
-      minetest.chat_send_player( name, pathogen.name..' - '..pathogen.description )
+    local pathogens = pathogen.get_pathogens()
+    for key, _pathogen in pairs( pathogens ) do
+      print( key, _pathogen.description )
+      minetest.chat_send_player( name, _pathogen.name..' - '.._pathogen.description )
     end
   end
 })
@@ -41,16 +41,20 @@ minetest.register_chatcommand("immunize", {
   description = "cure a player from an infection",
   privs = { pathogen=true },
   func = function(name, params)
-    local _params = params:split(' ')
-    local _player_name = _params[1]
-    local _pathogen_name = _params[2]
-    local _infection = pathogen.infections[ _player_name.._pathogen_name ]
-    if pathogen.immunize( _pathogen_name, _player_name ) then
-      minetest.chat_send_player( name, 'succesfully immunized '.._player_name..' against '.._pathogen_name)
-      return true
+    local params = params:split(' ')
+    local player_name = _params[1]
+    local pathogen_name = _params[2]
+    local infection = pathogen.get_infection( pathogen_name, player_name )
+    if infection then
+      if not minetest.get_player_by_name( player_name ) then
+        minetest.chat_send_player(name, 'could not immunize: player '..player_name..' does not exist')
+      else
+        if pathogen.immunize( infection ) then
+          minetest.chat_send_player(name, 'infected '..player_name..' from '..pathogen_name )
+        end
+      end
     else
-      minetest.chat_send_player( name, 'immunization failed: requires valid player name and the pathogen name to work' )
-      return false
+        minetest.chat_send_player(name, 'could not immunize: player '..player_name..' does not exist')
     end
   end
 })
