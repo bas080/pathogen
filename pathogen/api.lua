@@ -56,7 +56,10 @@ pathogen.register_fluid = function( name )
       local meta = minetest.get_meta( pos )
       local pathogen_name = meta:get_string( "pathogen" )
       local player_name = puncher:get_player_name()
-      pathogen.infect( pathogen_name, player_name )
+      local _pathogen = pathogen.get_pathogen( pathogen_name )
+      if _pathogen then
+        pathogen.infect( _pathogen, player_name )
+      end
     end,
     selection_box = {
       type = "fixed",
@@ -182,9 +185,11 @@ pathogen.perform_symptom = function( infection, symptom )
     --survives and is now immunized, immunization lasts till the server is
     --restarted
     ------
-    pathogen.immunize( infection )
-    if infection.pathogen.on_recover then
-      return infection.pathogen.on_recover( infection )
+    local on_recover = infection.pathogen.on_recover
+    if on_recover then
+      pathogen.immunize( infection )
+      local result = on_recover( infection )
+      return result
     else
       return false
     end
@@ -216,7 +221,9 @@ end
 pathogen.get_infection = function( player_name,  pathogen_name )
   --get an infection of a certain player
   ----
-  return pathogen.infections[ player_name..pathogen_name ]
+  if player_name and pathogen_name then
+    return pathogen.infections[ player_name..pathogen_name ]
+  end
 end
 
 pathogen.get_infections = function( )
@@ -286,8 +293,9 @@ minetest.register_on_dignode( function( pos, oldnode, digger)
 ----
   local pathogen_name = pathogen.get_contaminant( pos )
   if  pathogen_name then
+    local _pathogen = pathogen.get_pathogen( pathogen_name )
     local player_name = digger:get_player_name( )
-    pathogen.infect( player_name, pathogen_name )
+    pathogen.infect( player_name, _pathogen )
   end
   return true
 end)
