@@ -113,15 +113,13 @@ end
 pathogen.infect = function( _pathogen, player_name )
   --infects the player with a pathogen. If not able returns false
   ----
-  local infection = pathogen.get_infection( _pathogen.name, player_name )
+  local infection = pathogen.get_infection( player_name, _pathogen.name )
   if ( infection ~= nil ) then
     --return false if pathogen does not exist or player is immune
     if ( infection.immune ) then return false end
   end
     --consider making an is_immune function
     ----
-
-
   local infection = {
     --The table containing all the data that a infection cinsists out of. See
     --the README.md for a more extensive explanation
@@ -186,10 +184,10 @@ pathogen.perform_symptom = function( infection, symptom )
     --restarted
     ------
     local on_recover = infection.pathogen.on_recover
-    if on_recover then
+    if on_recover and ( infection.pathogen.symptoms+1 == symptom ) then
       pathogen.immunize( infection )
       local result = on_recover( infection )
-      return result
+      return true
     else
       return false
     end
@@ -214,8 +212,12 @@ end
 pathogen.remove_infection = function( infection )
   --removes the immunization and the infection all together
   ----
-  infection = nil
-  return infection == nil
+  if pathogen.infections[ infection.player..infection.pathogen.name ] then
+    pathogen.infections[ infection.player..infection.pathogen.name ]= nil
+    return true
+  else
+    return false
+  end
 end
 
 pathogen.get_infection = function( player_name,  pathogen_name )
@@ -223,6 +225,8 @@ pathogen.get_infection = function( player_name,  pathogen_name )
   ----
   if player_name and pathogen_name then
     return pathogen.infections[ player_name..pathogen_name ]
+  else
+    return nil
   end
 end
 
