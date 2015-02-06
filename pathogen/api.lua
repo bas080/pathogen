@@ -56,7 +56,8 @@ pathogen.register_fluid = function( name )
       local meta = minetest.get_meta( pos )
       local pathogen_name = meta:get_string( "pathogen" )
       local player_name = puncher:get_player_name()
-      pathogen.infect( pathogen_name, player_name )
+      local _pathogen = pathogen.get_pathogen( pathogen_name )
+      pathogen.infect( _pathogen, player_name )
     end,
     selection_box = {
       type = "fixed",
@@ -69,15 +70,23 @@ pathogen.contaminate = function( pos, pathogen_name )
   --contaminates a node which when dug infects the player that dug the node
   ----
   local meta = minetest.get_meta( pos )
-  meta:set_string( 'pathogen', pathogen_name )
+  if meta then
+    meta:set_string( 'pathogen', pathogen_name )
+    return true
+  else
+    return false
+  end
 end
 
 pathogen.decontaminate = function( pos )
   --remove the contamination from the node
   ----
-  if pos then
-    local meta = minetest.get_meta( pos )
+  local meta = minetest.get_meta( pos )
+  if meta then
     meta:set_string( 'pathogen', '' )
+    return true
+  else
+    return false
   end
 end
 
@@ -86,9 +95,14 @@ pathogen.get_contaminant = function( pos )
   --with which it is infected
   ------
   local meta = minetest.get_meta( pos )
-  local pathogen = meta:get_string( 'pathogen' )
-  if pathogen ~= '' and pathogen then
-    return pathogen
+  if not meta then return false end
+  local pathogen_name = meta:get_string( 'pathogen' )
+  if pathogen_name then
+    if pathogen_name ~= '' then
+      return pathogen_name
+    else
+      return nil
+    end
   else
     return nil
   end
@@ -98,15 +112,13 @@ end
 pathogen.infect = function( _pathogen, player_name )
   --infects the player with a pathogen. If not able returns false
   ----
-  local infection = pathogen.get_infection( _pathogen.name, player_name )
+  local infection = pathogen.get_infection( player_name, _pathogen.name )
   if ( infection ~= nil ) then
     --return false if pathogen does not exist or player is immune
     if ( infection.immune ) then return false end
   end
     --consider making an is_immune function
     ----
-
-
   local infection = {
     --The table containing all the data that a infection cinsists out of. See
     --the README.md for a more extensive explanation
@@ -170,9 +182,11 @@ pathogen.perform_symptom = function( infection, symptom )
     --survives and is now immunized, immunization lasts till the server is
     --restarted
     ------
-    pathogen.immunize( infection )
-    if infection.pathogen.on_recover then
-      return infection.pathogen.on_recover( infection )
+    local on_recover = infection.pathogen.on_recover
+    if on_recover and ( infection.pathogen.symptoms+1 == symptom ) then
+      pathogen.immunize( infection )
+      on_recover( infection )
+      return true
     else
       return false
     end
@@ -197,14 +211,22 @@ end
 pathogen.remove_infection = function( infection )
   --removes the immunization and the infection all together
   ----
-  infection = nil
-  return infection == nil
+  if pathogen.infections[ infection.player..infection.pathogen.name ] then
+    pathogen.infections[ infection.player..infection.pathogen.name ]= nil
+    return true
+  else
+    return false
+  end
 end
 
 pathogen.get_infection = function( player_name,  pathogen_name )
   --get an infection of a certain player
   ----
-  return pathogen.infections[ player_name..pathogen_name ]
+  if player_name and pathogen_name then
+    return pathogen.infections[ player_name..pathogen_name ]
+  else
+    return nil
+  end
 end
 
 pathogen.get_infections = function( )
@@ -275,7 +297,7 @@ minetest.register_on_dignode( function( pos, oldnode, digger)
   local pathogen_name = pathogen.get_contaminant( pos )
   if  pathogen_name then
     local player_name = digger:get_player_name( )
-    pathogen.infect( player_name, pathogen_name )
+    pathogen.infect( _pathogen, player_name )
   end
   return true
 end)
