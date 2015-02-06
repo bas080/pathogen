@@ -197,6 +197,6 @@ Reference
 
 License
 =======
-Code	WTFPL
-Images	WTFPL
-Sounds	CC
+- Code	WTFPL
+- Images	WTFPL
+- Sounds	CC
