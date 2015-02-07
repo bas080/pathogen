@@ -1,5 +1,4 @@
 minetest.register_privilege('pathogen', "infect and cure players of pathogens")
---TODO Check if player exists and then perform an infect or immunize
 
 minetest.register_chatcommand("infect", {
   params = "<pathogen> <player>",
@@ -16,7 +15,9 @@ minetest.register_chatcommand("infect", {
     if _pathogen then
       local infection = pathogen.infect( _pathogen, player_name )
       if infection then
-        minetest.chat_send_player(name, 'infected '..player_name..' with '..pathogen_name )
+        minetest.chat_send_player(name, 'infected: '..player_name..' with '..pathogen_name )
+      else
+        minetest.chat_send_player(name, 'could not infect: '..pathogen_name..' is immune')
       end
     else
       minetest.chat_send_player(name, 'could not infect: pathogen '..pathogen_name..' does not exist')
@@ -49,8 +50,8 @@ minetest.register_chatcommand("immunize", {
     local player_name = params[1]
     local pathogen_name = params[2]
     local infection = pathogen.get_infection( player_name, pathogen_name )
-    print( infection )
     if infection then
+      pathogen.immunize( infection )
       minetest.chat_send_player(name, 'immunized: player '..player_name..' from '..pathogen_name)
     else
       minetest.chat_send_player(name, 'could not immunize: infection does not exist' )
