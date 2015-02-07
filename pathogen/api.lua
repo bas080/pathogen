@@ -1,4 +1,6 @@
+-----------
 --PATHOGENS
+-----------
 pathogen.register_pathogen = function( pathogen_name, definition )
   --checks if pathogen is registererd and registers if not
   ----
@@ -22,8 +24,9 @@ pathogen.get_pathogens = function()
   ----
   return pathogen.pathogens
 end
-
+--------------
 --CONTAMINENTS
+--------------
 pathogen.spawn_fluid = function( name, pos, pathogen_name )
   --spawn the infectious juices
   ----
@@ -85,8 +88,13 @@ pathogen.decontaminate = function( pos )
   ----
   local meta = minetest.get_meta( pos )
   if meta then
-    meta:set_string( 'pathogen', '' )
-    return true
+    local str = meta:get_string('pathogen')
+    if str ~= '' then
+      meta:set_string( 'pathogen', '' )
+      return true
+    else
+      return false
+    end
   else
     return false
   end
@@ -109,8 +117,9 @@ pathogen.get_contaminant = function( pos )
     return false
   end
 end
-
+------------
 --INFECTIONS
+------------
 pathogen.infect = function( _pathogen, player_name )
   --infects the player with a pathogen. If not able returns false
   ----
@@ -125,6 +134,7 @@ pathogen.infect = function( _pathogen, player_name )
     --The table containing all the data that a infection cinsists out of. See
     --the README.md for a more extensive explanation
     -----
+    id = player_name.._pathogen.name,
     symptom = 0,
     pathogen = _pathogen,
     immune = false,
@@ -139,7 +149,9 @@ pathogen.infect = function( _pathogen, player_name )
   if on_infect then
     --check if on_infect has been registered in pathogen
     ----
-    on_infect( infection )
+    if minetest.get_player_by_name( player_name ) then
+      on_infect( infection )
+    end
   end
     --perform the on_infect command that is defined in the regsiter function
     --this is not the same as the on_symptoms. It is called only once at the
@@ -170,7 +182,11 @@ pathogen.perform_symptom = function( infection, symptom )
     infection.symptom = symptom
 
     local on_symptom = infection.pathogen.on_symptom
-    if on_symptom then on_symptom( infection ) end
+    if on_symptom then 
+      if minetest.get_player_by_name( infection.player ) then
+        on_symptom( infection ) 
+      end
+    end
 
     local interval = ( ( infection.pathogen.infection_period - infection.pathogen.latent_period ) / infection.pathogen.symptoms )
     minetest.after(  interval , function()
@@ -188,7 +204,9 @@ pathogen.perform_symptom = function( infection, symptom )
     if on_recover and ( infection.pathogen.symptoms+1 == symptom ) then
       pathogen.immunize( infection )
       local result = on_recover( infection )
-      on_recover( infection )
+      if minetest.get_player_by_name( infection.player ) then
+        on_recover( infection )
+      end
       return true
     else
       return false
@@ -199,11 +217,11 @@ pathogen.perform_symptom = function( infection, symptom )
 end
 
 pathogen.immunize = function( infection )
-  --immunize a player so the next symptom won"t show.
-  ----
+  --immunize a player so the next symptom won't show. It also disables the
+  --abilty to reinfect the player. Use pathogen.remove_infection to also remove
+  --the immunization
+  ------------------
   if infection.immune == true then
-    --do not perform immunization as the player is already immune
-    ----
     return false
   else
     infection.immune = true
@@ -211,7 +229,7 @@ pathogen.immunize = function( infection )
   end
 end
 
-pathogen.remove_infection = function( infection )
+pathogen.disinfect = function( infection )
   --removes the immunization and the infection all together
   ----
   if pathogen.infections[ infection.player..infection.pathogen.name ] then
@@ -250,8 +268,9 @@ pathogen.get_player_infections = function( player_name )
   end
   return output
 end
-
+-------------
 --PERSISTENCE
+-------------
 pathogen.save = function( )
 --TODO save the infections so it won"t get lost between server reloads
   local serialized = minetest.serialize( infections )
@@ -263,11 +282,12 @@ pathogen.load = function( )
   local deserialized = minetest.deserialize(string)
   return deserialized
 end
-
+---------
 --HELPERS
+---------
 pathogen.get_players_in_radius = function( pos, radius )
   --helper to get players within the radius.
-  ----
+  ------------------------------------------
   local objects = minetest.get_objects_inside_radius(pos, 5)
   local players = {}
   for index, object in ipairs(objects) do
@@ -281,7 +301,7 @@ end
 pathogen.on_dieplayer = function( player )
   --when dying while having a pathogen it will trigger the on_death of the
   --pathogen and it will remove all player infections
-  ------
+  ---------------------------------------------------
   local player_name = player:get_player_name()
   local _infections = pathogen.get_player_infections( player_name )
   for index, infection in pairs(_infections) do
@@ -289,7 +309,7 @@ pathogen.on_dieplayer = function( player )
     if _pathogen then
       local on_death = _pathogen.on_death
       if on_death then
-        pathogen.remove_infection( infecton )
+        pathogen.disinfect( infecton )
         on_death( infection )
         return true
       end
