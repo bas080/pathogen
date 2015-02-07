@@ -123,7 +123,7 @@ pathogen.infect = function( _pathogen, player_name )
   local infection = {
     --The table containing all the data that a infection cinsists out of. See
     --the README.md for a more extensive explanation
-    ------
+    -----
     symptom = 0,
     pathogen = _pathogen,
     immune = false,
@@ -276,30 +276,43 @@ pathogen.get_players_in_radius = function( pos, radius )
   return players
 end
 
-minetest.register_on_dieplayer( function( player )
---when dying while having a pathogen it will trigger the on_death of the
---pathogen and it will remove all player infections
-------
+pathogen.on_dieplayer = function( player )
+  --when dying while having a pathogen it will trigger the on_death of the
+  --pathogen and it will remove all player infections
+  ------
   local player_name = player:get_player_name()
   local _infections = pathogen.get_player_infections( player_name )
   for index, infection in pairs(_infections) do
     local _pathogen = pathogen.get_pathogen( infection.pathogen )
-    local on_death = _pathogen.on_death
-    if on_death then
-      pathogen.remove_infection( _pathogen.name, player_name )
-      on_death( infection )
+    if _pathogen then
+      local on_death = _pathogen.on_death
+      if on_death then
+        pathogen.remove_infection( _pathogen.name, player_name )
+        on_death( infection )
+        return true
+      end
     end
   end
-end)
+  return false
+end
 
-minetest.register_on_dignode( function( pos, oldnode, digger)
---infects players that dig a node that is infected with a pathogen
-----
+pathogen.on_dignode = function( pos, digger )
+  --infects players that dig a node that is infected with a pathogen
+  ----
   local pathogen_name = pathogen.get_contaminant( pos )
   if  pathogen_name then
     local _pathogen = pathogen.get_pathogen( pathogen_name )
     local player_name = digger:get_player_name( )
-    pathogen.infect( player_name, _pathogen )
+    return pathogen.infect( _pathogen, player_name )
   end
-  return true
+  return false
+end
+
+minetest.register_on_dignode( function( pos, oldnode, digger)
+  pathogen.on_dignode( pos, digger )
 end)
+
+minetest.register_on_dieplayer( function( player )
+  pathogen.on_dieplayer( player )
+end)
+
