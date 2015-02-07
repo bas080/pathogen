@@ -97,6 +97,7 @@ pathogen.get_contaminant = function( pos )
   --with which it is infected
   ------
   local meta = minetest.get_meta( pos )
+  if not meta then return false end
   local pathogen_name = meta:get_string( 'pathogen' )
   if pathogen_name then
     if pathogen_name ~= '' then
@@ -187,6 +188,7 @@ pathogen.perform_symptom = function( infection, symptom )
     if on_recover and ( infection.pathogen.symptoms+1 == symptom ) then
       pathogen.immunize( infection )
       local result = on_recover( infection )
+      on_recover( infection )
       return true
     else
       return false
@@ -287,7 +289,7 @@ pathogen.on_dieplayer = function( player )
     if _pathogen then
       local on_death = _pathogen.on_death
       if on_death then
-        pathogen.remove_infection( _pathogen.name, player_name )
+        pathogen.remove_infection( infecton )
         on_death( infection )
         return true
       end

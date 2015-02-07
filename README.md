@@ -128,7 +128,7 @@ pathogen.get_pathogens = function()
   ----
 
 --CONTAMINENTS
-pathogen.spawn_fluid = function( name, pos, pathogen_name )
+pathogen.spawn_fluid = function( name, pos, pathogen )
   --spawn the infectious juices
   ----
 pathogen.register_fluid = function( name )
@@ -147,34 +147,34 @@ pathogen.get_contaminant = function( pos )
   ------
 
 --INFECTIONS
-pathogen.infect = function( pathogen_name, player_name )
-  --infects the player with a pathogen.
+pathogen.infect = function( _pathogen, player_name )
+  --infects the player with a pathogen. If not able returns false
   ----
-pathogen.perform_symptom = function( pathogen_name, player_name, symptom_n )
+pathogen.perform_symptom = function( infection, symptom )
   --An infection can also be initiated without having to perform the on_infect.
   --you can can cut straight to a particular symptom by using this function
   --notice the symptom_n argument. This is a number that determines the state of
   --the infection.
   ----------
-pathogen.immunize = function( pathogen_name, player_name )
+pathogen.immunize = function( infection )
   --immunize a player so the next symptom won"t show.
   ----
-pathogen.remove_infection = function( pathogen_name, player_name )
+pathogen.remove_infection = function( infection )
   --removes the immunization and the infection all together
   ----
-pathogen.get_infection = function( player_name, pathogen_name )
+pathogen.get_infection = function( player_name,  pathogen_name )
   --get an infection of a certain player
   ----
-pathogen.get_infections = function()
+pathogen.get_infections = function( )
   --gives all the infections of all the players
   ----
 pathogen.get_player_infections = function( player_name )
   --helper function for getting the infections of a certain player
   ----
 
---PERSISTENCE
-pathogen.save = function( infections )
-pathogen.load = function( run )
+--PERSISTENCE (WIP)
+pathogen.save = function( )
+pathogen.load = function( )
 
 --HELPERS
 pathogen.get_players_in_radius = function( pos, radius )
