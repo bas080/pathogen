@@ -301,7 +301,7 @@ end
 pathogen.on_dieplayer = function( player )
   --when dying while having a pathogen it will trigger the on_death of the
   --pathogen and it will remove all player infections
-  ---------------------------------------------------
+  ------
   local player_name = player:get_player_name()
   local _infections = pathogen.get_player_infections( player_name )
   for index, infection in pairs(_infections) do
@@ -309,7 +309,7 @@ pathogen.on_dieplayer = function( player )
     if _pathogen then
       local on_death = _pathogen.on_death
       if on_death then
-        pathogen.disinfect( infecton )
+        pathogen.disinfect( infection )
         on_death( infection )
         return true
       end
